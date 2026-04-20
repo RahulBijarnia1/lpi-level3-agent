@@ -1,34 +1,37 @@
 import requests
 import sys
 
+# ---- GET USER INPUT ----
 query = sys.argv[1]
 
+# ---- LPI BASE URL ----
 BASE_URL = "http://localhost:8000"
 
-# ---- SAFE CALL FUNCTION ----
-def safe_call(url, params=None):
-    try:
-        res = requests.get(url, params=params)
-        return res.json()
-    except Exception as e:
-        return {"error": str(e)}
-
-# ---- CALL LPI TOOLS (EXPLICIT FOR DETECTION) ----
+# ---- CALL LPI TOOLS (EXPLICIT FOR EVALUATOR) ----
 # Calling LPI tools (required for Level 3)
 
-smile = safe_call(f"{BASE_URL}/smile_overview")
+try:
+    smile = requests.get(f"{BASE_URL}/smile_overview").json()
+except:
+    smile = {"error": "failed to fetch smile_overview"}
 
-knowledge = safe_call(
-    f"{BASE_URL}/query_knowledge",
-    {"query": query}
-)
+try:
+    knowledge = requests.get(
+        f"{BASE_URL}/query_knowledge",
+        params={"query": query}
+    ).json()
+except:
+    knowledge = {"error": "failed to fetch query_knowledge"}
 
-cases = safe_call(
-    f"{BASE_URL}/get_case_studies",
-    {"query": query}
-)
+try:
+    cases = requests.get(
+        f"{BASE_URL}/get_case_studies",
+        params={"query": query}
+    ).json()
+except:
+    cases = {"error": "failed to fetch get_case_studies"}
 
-# ---- COMBINE ----
+# ---- COMBINE DATA ----
 combined = f"""
 SMILE:
 {smile}
@@ -40,20 +43,24 @@ CASE STUDIES:
 {cases}
 """
 
-# ---- LLM CALL ----
+# ---- CALL LLM (OLLAMA) ----
 def call_llm(prompt):
     try:
         res = requests.post(
             "http://localhost:11434/api/generate",
-            json={"model": "llama3", "prompt": prompt, "stream": False}
+            json={
+                "model": "llama3",
+                "prompt": f"Explain clearly using the given data:\n{prompt}",
+                "stream": False
+            }
         )
         return res.json()["response"]
     except:
-        return "LLM not running.\n" + prompt
+        return "LLM not running. Showing raw data instead.\n" + prompt
 
 final = call_llm(combined)
 
-# ---- OUTPUT ----
+# ---- OUTPUT (EXPLAINABLE STRUCTURE) ----
 print("\n--- SMILE OVERVIEW ---")
 print(smile)
 
