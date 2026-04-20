@@ -1,17 +1,23 @@
 import requests
 import sys
-
+def safe_call(url, params=None):
+    try:
+        res = requests.get(url, params=params)
+        return res.json()
+    except Exception as e:
+        return {"error": str(e)}
 query = sys.argv[1]
 
-# ---- TOOL FUNCTIONS ----
+BASE_URL = "http://localhost:8000"
+
 def smile_overview():
-    return "SMILE methodology focuses on structured explainability."
+    return safe_call(f"{BASE_URL}/smile_overview")
 
 def query_knowledge(q):
-    return f"Knowledge about '{q}': Used in modern systems."
+    return safe_call(f"{BASE_URL}/query_knowledge", {"query": q})
 
 def get_case_studies(q):
-    return f"Case study: '{q}' used in healthcare and finance."
+    return safe_call(f"{BASE_URL}/get_case_studies", {"query": q})
 
 # ---- CALL TOOLS ----
 smile = smile_overview()
@@ -30,7 +36,7 @@ CASE STUDIES:
 {cases}
 """
 
-# ---- CALL LLM ----
+# ---- LLM CALL ----
 def call_llm(prompt):
     try:
         res = requests.post(
@@ -39,11 +45,11 @@ def call_llm(prompt):
         )
         return res.json()["response"]
     except:
-        return "LLM not running. Showing raw output:\n" + prompt
+        return "LLM not running.\n" + prompt
 
 final = call_llm(combined)
 
-# ---- PRINT OUTPUT ----
+# ---- OUTPUT ----
 print("\n--- SMILE OVERVIEW ---")
 print(smile)
 
