@@ -4,7 +4,7 @@
 I built an AI agent in Python that connects to the LPI MCP server 
 and answers questions using the SMILE methodology knowledge base.
 The agent accepts a user question, queries multiple LPI tools, 
-combines the results, and returns an explainable answer that 
+combines the results, and returns an explainable answer that  
 cites exactly which tools provided which information.
 
 ## Step by Step Process
